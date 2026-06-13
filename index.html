@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avantages CE</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0f1117;color:#e8eaf0;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 16px}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:2.2rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f0b429;margin-bottom:6px;text-align:center}
+  .subtitle{font-size:.85rem;color:#777;margin-bottom:32px;text-align:center}
+  .card{background:#1a1d27;border-radius:14px;padding:28px 24px;width:100%;max-width:540px;box-shadow:0 4px 24px rgba(0,0,0,.4);margin-bottom:24px}
+  .field-label{font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#f0b429;margin-bottom:8px}
+  select{width:100%;background:#0f1117;color:#e8eaf0;border:1.5px solid #2e3244;border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:1rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f0b429' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;transition:border-color .2s;margin-bottom:20px}
+  select:focus{outline:none;border-color:#f0b429}
+  .separator{display:flex;align-items:center;gap:12px;margin:0 0 20px;color:#444;font-size:.8rem;letter-spacing:1px;text-transform:uppercase}
+  .separator::before,.separator::after{content:'';flex:1;height:1px;background:#2e3244}
+  .btn-reset{width:100%;padding:12px;background:transparent;border:1.5px solid #2e3244;border-radius:8px;color:#888;font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;transition:all .2s}
+  .btn-reset:hover{border-color:#f0b429;color:#f0b429}
+  .search-wrap{position:relative;margin-bottom:20px}
+  .search-wrap input{width:100%;background:#0f1117;color:#e8eaf0;border:1.5px solid #2e3244;border-radius:8px;padding:12px 14px 12px 38px;font-family:'DM Sans',sans-serif;font-size:1rem;transition:border-color .2s}
+  .search-wrap input:focus{outline:none;border-color:#f0b429}
+  .search-wrap input::placeholder{color:#555}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#555;font-size:1rem;pointer-events:none}
+  #results{width:100%;max-width:540px}
+  .result-item{background:#1a1d27;border-left:4px solid #f0b429;border-radius:10px;padding:16px 18px;margin-bottom:12px;display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .result-name{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#fff;grid-column:1}
+  .result-type{font-size:.75rem;color:#888;grid-column:1;text-transform:capitalize}
+  .result-remise{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;color:#4dd98a;grid-column:2;grid-row:1/3;text-align:right;white-space:nowrap}
+  .result-via{font-size:.72rem;color:#aaa;grid-column:1/3;margin-top:4px;font-style:italic}
+  .no-result{text-align:center;color:#555;font-style:italic;padding:20px 0}
+  .count-label{font-size:.8rem;color:#666;margin-bottom:14px;text-align:right}
+</style>
+</head>
+<body>
+<h1>🎟 Avantages CE</h1>
+<p class="subtitle">Recherchez une remise par nom ou par type</p>
+<div class="card">
+  <div class="field-label">🔍 Recherche rapide</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔎</span>
+    <input type="text" id="txt-search" placeholder="Tapez un nom de marque…" autocomplete="off">
+  </div>
+  <div class="separator">ou chercher par</div>
+  <div class="field-label">📋 Par nom</div>
+  <select id="sel-nom"><option value="">— Choisir un nom —</option></select>
+  <div class="separator">ou</div>
+  <div class="field-label">🏷 Par type</div>
+  <select id="sel-type"><option value="">— Choisir un type —</option></select>
+  <button class="btn-reset" onclick="reset()">↺ Réinitialiser</button>
+</div>
+<div id="results"></div>
+
+<script>
+const data = [
+  {nom:"CGR",type:"ciné",remise:"7,60€",via:"Préau"},
+  {nom:"Cafeyn",type:"lecture",remise:"gratuit",via:"Préau"},
+  {nom:"Cinéthèque",type:"ciné",remise:"gratuit",via:"Préau"},
+  {nom:"Concerts",type:"culture",remise:"-5 à -20%",via:"Préau"},
+  {nom:"Spectacles",type:"culture",remise:"-5 à -20%",via:"Préau"},
+  {nom:"Tout apprendre",type:"culture",remise:"gratuit",via:"Préau"},
+  {nom:"Cap adrenaline",type:"activité",remise:"10%",via:"Préau"},
+  {nom:"Pass montagne",type:"forfait ski",remise:"50%",via:"Préau"},
+  {nom:"Abracadaroom",type:"voyage",remise:"10%",via:"Préau"},
+  {nom:"Adagio",type:"voyage",remise:"18%",via:"Préau"},
+  {nom:"Air BnB",type:"voyage",remise:"4%",via:"Préau"},
+  {nom:"Appart-Hôtel Mer & Golf",type:"voyage",remise:"15%",via:"Préau"},
+  {nom:"Aroeven",type:"colo",remise:"5%",via:"Préau"},
+  {nom:"Les Fauvettes",type:"colo",remise:"20%",via:"Préau"},
+  {nom:"Bateaux Parisiens",type:"transport",remise:"-3 à -48%",via:"Préau"},
+  {nom:"Bedycasa",type:"voyage",remise:"10%",via:"Préau"},
+  {nom:"Belambra",type:"voyage",remise:"-5 à -24%",via:"Préau"},
+  {nom:"Camping Direct CE",type:"voyage",remise:"jusqu'à 40%",via:"Préau"},
+  {nom:"Center Parcs",type:"voyage",remise:"jusqu'à 40%",via:"Préau"},
+  {nom:"CGH",type:"voyage",remise:"10%",via:"Préau"},
+  {nom:"Corsica Linéa",type:"transport",remise:"jusqu'à 35%",via:"Préau"},
+  {nom:"Fram",type:"voyage",remise:"divers",via:"Préau"},
+  {nom:"Homair",type:"voyage",remise:"5 à 10%",via:"Préau"},
+  {nom:"Huttopia",type:"voyage",remise:"jusqu'à 25%",via:"Préau"},
+  {nom:"Isula",type:"voyage",remise:"5 à 30%",via:"Préau"},
+  {nom:"Jet Tours",type:"voyage",remise:"jusqu'à 13%",via:"Préau"},
+  {nom:"La France du Nord au Sud",type:"voyage",remise:"6%",via:"Préau"},
+  {nom:"Maeva",type:"voyage",remise:"10%",via:"Préau"},
+  {nom:"Manche Îles Express",type:"transport",remise:"15%",via:"Préau"},
+  {nom:"Mileade",type:"voyage",remise:"8 à 13%",via:"Préau"},
+  {nom:"MMV",type:"voyage",remise:"5 à 20%",via:"Préau"},
+  {nom:"Navix",type:"voyage",remise:"15%",via:"Préau"},
+  {nom:"Pierre & Vacances",type:"voyage",remise:"jusqu'à 10%",via:"Préau"},
+  {nom:"Resasol",type:"voyage",remise:"jusqu'à 10%",via:"Préau"},
+  {nom:"Resacolo",type:"colo",remise:"jusqu'à 8%",via:"Préau"},
+  {nom:"UCPA",type:"voyage",remise:"5%",via:"Préau"},
+  {nom:"UFCV",type:"formation",remise:"10%",via:"Préau"},
+  {nom:"Vacances Passion",type:"voyage",remise:"10%",via:"Préau"},
+  {nom:"Vacances pour Tous",type:"colo",remise:"10%",via:"Préau"},
+  {nom:"Vacances ULFV",type:"voyage",remise:"10%",via:"Préau"},
+  {nom:"Vedettes Odet",type:"transport",remise:"10%",via:"Préau"},
+  {nom:"VTF",type:"voyage",remise:"5 à 12%",via:"Préau"},
+  {nom:"VVF",type:"voyage",remise:"10 à 30%",via:"Préau"},
+  {nom:"Weekendesk",type:"voyage",remise:"10%",via:"Préau"},
+  {nom:"Worldia",type:"voyage",remise:"9%",via:"Préau"},
+  {nom:"Benefits",type:"électroménager",remise:"divers",via:"Préau"},
+  {nom:"Dell",type:"informatique",remise:"divers",via:"Préau"},
+  {nom:"Europcar",type:"transport",remise:"15%",via:"Préau"},
+  {nom:"Pharmazon",type:"soins",remise:"13 à 18%",via:"Préau"},
+  {nom:"Sixt",type:"transport",remise:"jusqu'à 15%",via:"Préau"},
+  {nom:"Adidas",type:"quotidien",remise:"13%",via:"Préau"},
+  {nom:"Apple",type:"numérique",remise:"2,30%",via:"Préau"},
+  {nom:"Auchan",type:"quotidien",remise:"5%",via:"Préau"},
+  {nom:"Bonobo",type:"quotidien",remise:"8%",via:"Préau"},
+  {nom:"Carrefour",type:"quotidien",remise:"5,70%",via:"Préau"},
+  {nom:"Cdiscount",type:"quotidien",remise:"3%",via:"Préau"},
+  {nom:"Conforama",type:"quotidien",remise:"6,50%",via:"Préau"},
+  {nom:"Courir",type:"quotidien",remise:"7%",via:"Préau"},
+  {nom:"Cultura",type:"quotidien",remise:"6,50%",via:"Préau"},
+  {nom:"Decathlon",type:"quotidien",remise:"4%",via:"Préau"},
+  {nom:"Deliveroo",type:"quotidien",remise:"4%",via:"Préau"},
+  {nom:"Electrolux",type:"électroménager",remise:"8%",via:"Préau"},
+  {nom:"Fnac Darty",type:"électroménager",remise:"4,50%",via:"Préau"},
+  {nom:"Ikea",type:"quotidien",remise:"4%",via:"Préau"},
+  {nom:"Intermarché",type:"quotidien",remise:"4%",via:"Préau"},
+  {nom:"Intersport",type:"quotidien",remise:"4%",via:"Préau"},
+  {nom:"JD Sports",type:"quotidien",remise:"5,30%",via:"Préau"},
+  {nom:"Brice / Jules",type:"quotidien",remise:"6,20%",via:"Préau"},
+  {nom:"La Redoute",type:"quotidien",remise:"5%",via:"Préau"},
+  {nom:"Lacoste",type:"quotidien",remise:"9%",via:"Préau"},
+  {nom:"Leroy Merlin",type:"quotidien",remise:"5,50%",via:"Préau"},
+  {nom:"Monoprix",type:"quotidien",remise:"4,45%",via:"Préau"},
+  {nom:"Netflix",type:"quotidien",remise:"4,40%",via:"Préau"},
+  {nom:"Nike",type:"quotidien",remise:"5,40%",via:"Préau"},
+  {nom:"Primark",type:"quotidien",remise:"8%",via:"Préau"},
+  {nom:"Promod",type:"quotidien",remise:"9%",via:"Préau"},
+  {nom:"Sarenza",type:"quotidien",remise:"8%",via:"Préau"},
+  {nom:"Sephora",type:"quotidien",remise:"9%",via:"Préau"},
+  {nom:"Showroomprivé",type:"quotidien",remise:"4%",via:"Préau"},
+  {nom:"Smartbox",type:"quotidien",remise:"15%",via:"Préau"},
+  {nom:"Spartoo",type:"quotidien",remise:"15%",via:"Préau"},
+  {nom:"The Fork",type:"quotidien",remise:"7%",via:"Préau"},
+  {nom:"Uber",type:"transport",remise:"4%",via:"Préau"},
+  {nom:"Zalando",type:"quotidien",remise:"9%",via:"Préau"},
+  {nom:"Yves Rocher",type:"quotidien",remise:"9%",via:"Préau"},
+  // Billetterie Préau
+  {nom:"Gémo",type:"quotidien",remise:"10%",via:"Billetterie Préau"},
+  {nom:"Lastminute",type:"voyage",remise:"6%",via:"Billetterie Préau"},
+  {nom:"Netflix",type:"quotidien",remise:"3%",via:"Billetterie Préau"},
+  {nom:"Showroomprivé",type:"quotidien",remise:"4%",via:"Billetterie Préau"},
+  {nom:"Lenovo",type:"informatique",remise:"10%",via:"Billetterie Préau"},
+  {nom:"Auto Sécurité",type:"voiture",remise:"15 ou 20€",via:"Billetterie Préau"},
+  {nom:"Securitest",type:"voiture",remise:"15€",via:"Billetterie Préau"},
+  {nom:"Autovision",type:"voiture",remise:"15 à 19€",via:"Billetterie Préau"},
+  {nom:"Hertz",type:"transport",remise:"10%",via:"Billetterie Préau"},
+  {nom:"Sixt",type:"transport",remise:"15%",via:"Billetterie Préau"},
+  {nom:"Saut élastique",type:"activité",remise:"10%",via:"Billetterie Préau"},
+  {nom:"Planeur",type:"activité",remise:"10%",via:"Billetterie Préau"},
+  {nom:"Parapente",type:"activité",remise:"10%",via:"Billetterie Préau"},
+  {nom:"Montgolfière",type:"activité",remise:"10%",via:"Billetterie Préau"},
+  {nom:"Location ski Intersport",type:"activité",remise:"6 à 50%",via:"Billetterie Préau"},
+  {nom:"Location ski Intersport",type:"activité",remise:"5%",via:"Billetterie Préau"},
+  {nom:"Accrobranche",type:"activité",remise:"6 à 20%",via:"Billetterie Préau"},
+  {nom:"Activités vacances",type:"activité",remise:"10%",via:"Billetterie Préau"},
+  // Ekoya
+  {nom:"3 Brasseurs",type:"resto",remise:"6,50%",via:"Ekoya"},
+  {nom:"3 Suisses",type:"quotidien",remise:"5%",via:"Ekoya"},
+  {nom:"Adidas",type:"quotidien",remise:"9%",via:"Ekoya"},
+  {nom:"Air BnB",type:"voyage",remise:"3%",via:"Ekoya"},
+  {nom:"Auchan",type:"quotidien",remise:"3,70%",via:"Ekoya"},
+  {nom:"Bolt",type:"quotidien",remise:"4,70%",via:"Ekoya"},
+  {nom:"Bonobo",type:"quotidien",remise:"6%",via:"Ekoya"},
+  {nom:"Bricomarché",type:"quotidien",remise:"4%",via:"Ekoya"},
+  {nom:"But",type:"quotidien",remise:"6%",via:"Ekoya"},
+  {nom:"C&A",type:"quotidien",remise:"8,50%",via:"Ekoya"},
+  {nom:"Camping & Co",type:"voyage",remise:"7%",via:"Ekoya"},
+  {nom:"Carrefour",type:"quotidien",remise:"4,20%",via:"Ekoya"},
+  {nom:"Hyper U",type:"quotidien",remise:"3%",via:"Ekoya"},
+  {nom:"Cdiscount",type:"quotidien",remise:"3%",via:"Ekoya"},
+  {nom:"Conforama",type:"quotidien",remise:"6%",via:"Ekoya"},
+  {nom:"Courir",type:"quotidien",remise:"3,70%",via:"Ekoya"},
+  {nom:"Cultura",type:"quotidien",remise:"4,20%",via:"Ekoya"},
+  {nom:"Decathlon",type:"quotidien",remise:"3%",via:"Ekoya"},
+  {nom:"Deliveroo",type:"quotidien",remise:"3,20%",via:"Ekoya"},
+  {nom:"Electro Dépôt",type:"quotidien",remise:"3%",via:"Ekoya"},
+  {nom:"Eurostar",type:"transport",remise:"2,50%",via:"Ekoya"},
+  {nom:"Flixbus",type:"transport",remise:"5%",via:"Ekoya"},
+  {nom:"Fnac Darty",type:"quotidien",remise:"3,70%",via:"Ekoya"},
+  {nom:"Foot Locker",type:"quotidien",remise:"7%",via:"Ekoya"},
+  {nom:"Gémo",type:"quotidien",remise:"8%",via:"Ekoya"},
+  {nom:"Google Play",type:"quotidien",remise:"2,50%",via:"Ekoya"},
+  {nom:"Gymshark",type:"quotidien",remise:"6,50%",via:"Ekoya"},
+  {nom:"Intermarché",type:"quotidien",remise:"3%",via:"Ekoya"},
+  {nom:"Jack & Jones",type:"quotidien",remise:"8%",via:"Ekoya"},
+  {nom:"JD Sports",type:"quotidien",remise:"5%",via:"Ekoya"},
+  {nom:"Jules & Brice",type:"quotidien",remise:"6%",via:"Ekoya"},
+  {nom:"Kiabi",type:"quotidien",remise:"4%",via:"Ekoya"},
+  {nom:"La Redoute",type:"quotidien",remise:"5%",via:"Ekoya"},
+  {nom:"Leroy Merlin",type:"quotidien",remise:"3,70%",via:"Ekoya"},
+  {nom:"Mango",type:"quotidien",remise:"7%",via:"Ekoya"},
+  {nom:"Monoprix",type:"quotidien",remise:"4%",via:"Ekoya"},
+  {nom:"Netflix",type:"quotidien",remise:"3%",via:"Ekoya"},
+  {nom:"Nike",type:"quotidien",remise:"3,20%",via:"Ekoya"},
+  {nom:"Nintendo",type:"jeux",remise:"7%",via:"Ekoya"},
+  {nom:"Primark",type:"quotidien",remise:"7%",via:"Ekoya"},
+  {nom:"Promod",type:"quotidien",remise:"8,50%",via:"Ekoya"},
+  {nom:"Sarenza",type:"quotidien",remise:"6,50%",via:"Ekoya"},
+  {nom:"Showroomprivé",type:"quotidien",remise:"5%",via:"Ekoya"},
+  {nom:"Spartoo",type:"quotidien",remise:"9%",via:"Ekoya"},
+  {nom:"The Fork",type:"quotidien",remise:"7%",via:"Ekoya"},
+  {nom:"Uber",type:"transport",remise:"4,20%",via:"Ekoya"},
+  {nom:"Uber Eats",type:"repas",remise:"4,20%",via:"Ekoya"},
+  {nom:"Verychic",type:"quotidien",remise:"7,50%",via:"Ekoya"},
+  {nom:"Weekendesk",type:"voyage",remise:"6%",via:"Ekoya"},
+  {nom:"Yves Rocher",type:"quotidien",remise:"8,50%",via:"Ekoya"},
+  {nom:"Zalando",type:"quotidien",remise:"7,50%",via:"Ekoya"},
+  {nom:"Aqualibi",type:"parc attraction",remise:"28%",via:"Ekoya"},
+  {nom:"Bateaux Mouches",type:"transport",remise:"50%",via:"Ekoya"},
+  {nom:"Bateaux Parisiens",type:"transport",remise:"40%",via:"Ekoya"},
+  {nom:"Bellewaerde",type:"parc attraction",remise:"36,30%",via:"Ekoya"},
+  {nom:"Bellewaerde",type:"parc attraction",remise:"25%",via:"Ekoya"},
+  {nom:"Center Parcs",type:"voyage",remise:"9,5 à 40%",via:"Ekoya"},
+  {nom:"Lewarde",type:"activité",remise:"17,20%",via:"Ekoya"},
+  {nom:"CGR",type:"ciné",remise:"7,60€",via:"Ekoya"},
+  {nom:"Chemin de Fer Baie de Somme",type:"activité",remise:"7,70%",via:"Ekoya"},
+  {nom:"Cité du Vin Bordeaux",type:"activité",remise:"42%",via:"Ekoya"},
+  {nom:"Disneyland",type:"parc attraction",remise:"47,90%",via:"Ekoya"},
+  {nom:"Europa Park",type:"parc attraction",remise:"25,70%",via:"Ekoya"},
+  {nom:"Futuroscope",type:"parc attraction",remise:"23,10%",via:"Ekoya"},
+  {nom:"Musée Grévin",type:"activité",remise:"19%",via:"Ekoya"},
+  {nom:"Interflora",type:"fleurs",remise:"12%",via:"Ekoya"},
+  {nom:"Le Refuge de la Tannière",type:"parc attraction",remise:"17,80%",via:"Ekoya"},
+  {nom:"Souterroscope",type:"activité",remise:"21,40%",via:"Ekoya"},
+  {nom:"Les Vedettes de Paris",type:"transport",remise:"39%",via:"Ekoya"},
+  {nom:"La Mer de Sable",type:"parc attraction",remise:"34,10%",via:"Ekoya"},
+  {nom:"Nausicaa",type:"activité",remise:"16,10%",via:"Ekoya"},
+  {nom:"Astérix",type:"parc attraction",remise:"33,80%",via:"Ekoya"},
+  {nom:"Bagatelle",type:"parc attraction",remise:"24%",via:"Ekoya"},
+  {nom:"Puy du Fou",type:"parc attraction",remise:"17%",via:"Ekoya"},
+  {nom:"Smartbox",type:"activité",remise:"15%",via:"Ekoya"},
+  {nom:"Ticketmaster",type:"activité",remise:"jusqu'à 45%",via:"Ekoya"},
+  {nom:"Tiqets",type:"activité",remise:"5%",via:"Ekoya"},
+  {nom:"Walibi",type:"parc attraction",remise:"35,10%",via:"Ekoya"},
+  {nom:"Wonderbox",type:"activité",remise:"15%",via:"Ekoya"},
+  {nom:"Adagio",type:"voyage",remise:"jusqu'à 18%",via:"Ekoya"},
+  {nom:"Appart City",type:"voyage",remise:"15%",via:"Ekoya"},
+  {nom:"Azureva",type:"voyage",remise:"10%",via:"Ekoya"},
+  {nom:"B&B",type:"voyage",remise:"jusqu'à 30%",via:"Ekoya"},
+  {nom:"Belambra",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"Campanile",type:"voyage",remise:"14%",via:"Ekoya"},
+  {nom:"Camping&Co",type:"voyage",remise:"8 ou 10%",via:"Ekoya"},
+  {nom:"Camping Direct",type:"voyage",remise:"8 à 40%",via:"Ekoya"},
+  {nom:"Campings.com",type:"voyage",remise:"7%",via:"Ekoya"},
+  {nom:"Center Parcs",type:"voyage",remise:"5 à 30%",via:"Ekoya"},
+  {nom:"CFCcroisière",type:"voyage",remise:"7%",via:"Ekoya"},
+  {nom:"Chamina Voyages",type:"voyage",remise:"6%",via:"Ekoya"},
+  {nom:"Citadines",type:"voyage",remise:"15 à 35%",via:"Ekoya"},
+  {nom:"Lookea",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"Marmara",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"Corsica Linéa",type:"voyage",remise:"jusqu'à 35%",via:"Ekoya"},
+  {nom:"Costa",type:"voyage",remise:"8% / 100% mineurs",via:"Ekoya"},
+  {nom:"Croisi Europe",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"Evaneos",type:"voyage",remise:"jusqu'à 200€",via:"Ekoya"},
+  {nom:"Fram",type:"voyage",remise:"9 à 11%",via:"Ekoya"},
+  {nom:"Goelia",type:"voyage",remise:"5 à 8%",via:"Ekoya"},
+  {nom:"Hotel Golden Tulipe",type:"voyage",remise:"14%",via:"Ekoya"},
+  {nom:"Homair",type:"voyage",remise:"5 à 15%",via:"Ekoya"},
+  {nom:"Hotel.com",type:"voyage",remise:"7%",via:"Ekoya"},
+  {nom:"Interhome",type:"voyage",remise:"8%",via:"Ekoya"},
+  {nom:"Location ski Intersport",type:"activité",remise:"7%",via:"Ekoya"},
+  {nom:"Jet Tours",type:"voyage",remise:"7 à 10%",via:"Ekoya"},
+  {nom:"Kombo (train, bus…)",type:"transport",remise:"4%",via:"Ekoya"},
+  {nom:"Maeva",type:"voyage",remise:"5 à 10%",via:"Ekoya"},
+  {nom:"MMV",type:"voyage",remise:"20 à 25%",via:"Ekoya"},
+  {nom:"MSC Croisière",type:"voyage",remise:"10 à 20%",via:"Ekoya"},
+  {nom:"Nouvelles Frontières",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"Pass Montagne",type:"forfait ski",remise:"jusqu'à 50%",via:"Ekoya"},
+  {nom:"Odalys",type:"voyage",remise:"10%",via:"Ekoya"},
+  {nom:"Pierre & Vacances",type:"voyage",remise:"10%",via:"Ekoya"},
+  {nom:"Promoséjour",type:"voyage",remise:"7 à 10%",via:"Ekoya"},
+  {nom:"Promovacances",type:"voyage",remise:"11%",via:"Ekoya"},
+  {nom:"Ski Planet",type:"matériel ski",remise:"5%",via:"Ekoya"},
+  {nom:"Snow Rental",type:"matériel ski",remise:"7%",via:"Ekoya"},
+  {nom:"TUI",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"UCPA",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"Vacancéole",type:"voyage",remise:"5%",via:"Ekoya"},
+  {nom:"Vacances Bleues",type:"voyage",remise:"jusqu'à 50%",via:"Ekoya"},
+  {nom:"VTF",type:"voyage",remise:"jusqu'à 12%",via:"Ekoya"},
+  {nom:"VVF",type:"voyage",remise:"10%",via:"Ekoya"},
+  {nom:"Alpiq",type:"quotidien",remise:"jusqu'à 16%",via:"Ekoya"},
+  {nom:"Bosch",type:"électroménager",remise:"jusqu'à 25%",via:"Ekoya"},
+  {nom:"Bultex",type:"quotidien",remise:"jusqu'à 50%",via:"Ekoya"},
+  {nom:"Emma",type:"quotidien",remise:"jusqu'à 50%",via:"Ekoya"},
+  {nom:"Epeda",type:"quotidien",remise:"jusqu'à 50%",via:"Ekoya"},
+  {nom:"Garmin",type:"quotidien",remise:"jusqu'à 25%",via:"Ekoya"},
+  {nom:"LG",type:"quotidien",remise:"jusqu'à 20%",via:"Ekoya"},
+  {nom:"Samsung",type:"numérique",remise:"jusqu'à 15%",via:"Ekoya"},
+  {nom:"Siemens",type:"quotidien",remise:"jusqu'à 25%",via:"Ekoya"},
+  {nom:"Tollens",type:"quotidien",remise:"jusqu'à 20%",via:"Ekoya"},
+];
+
+// Badge color per via
+const viaColor = {"Préau":"#f0b429","Billetterie Préau":"#e07b39","Ekoya":"#5b8dee"};
+
+const nomSel = document.getElementById('sel-nom');
+const typeSel = document.getElementById('sel-type');
+
+// Noms uniques triés (pour le menu) — mais on affiche TOUTES les occurrences à la recherche
+[...new Set(data.map(d=>d.nom))].sort((a,b)=>a.localeCompare(b,'fr')).forEach(n=>{
+  const o=document.createElement('option');o.value=n;o.textContent=n;nomSel.appendChild(o);
+});
+[...new Set(data.map(d=>d.type))].sort((a,b)=>a.localeCompare(b,'fr')).forEach(t=>{
+  const o=document.createElement('option');o.value=t;o.textContent=t;typeSel.appendChild(o);
+});
+
+const txtSearch = document.getElementById('txt-search');
+txtSearch.addEventListener('input',()=>{
+  const q=txtSearch.value.trim().toLowerCase();
+  if(!q){document.getElementById('results').innerHTML='';return;}
+  nomSel.value='';typeSel.value='';
+  const found=data.filter(d=>d.nom.toLowerCase().includes(q));
+  show(found, q);
+});
+nomSel.addEventListener('change',()=>{if(nomSel.value){txtSearch.value='';typeSel.value='';show(data.filter(d=>d.nom===nomSel.value));}});
+typeSel.addEventListener('change',()=>{if(typeSel.value){txtSearch.value='';nomSel.value='';show(data.filter(d=>d.type===typeSel.value));}});
+
+function show(items, q=''){
+  const div=document.getElementById('results');
+  if(!items.length){
+    div.innerHTML=`<p class="no-result">Aucun résultat${q?' pour "'+q+'"':''}.</p>`;return;
+  }
+  div.innerHTML=`<p class="count-label">${items.length} résultat${items.length>1?'s':''}</p>`;
+  items.forEach(it=>{
+    const c=viaColor[it.via]||'#f0b429';
+    div.innerHTML+=`
+      <div class="result-item" style="border-left-color:${c}">
+        <div class="result-name">${it.nom}</div>
+        <div class="result-type">${it.type}</div>
+        <div class="result-remise" style="color:#4dd98a">${it.remise}</div>
+        <div class="result-via">↗ ${it.via}</div>
+      </div>`;
+  });
+}
+
+function reset(){
+  txtSearch.value='';nomSel.value='';typeSel.value='';
+  document.getElementById('results').innerHTML='';
+}
+</script>
+</body>
+</html>
